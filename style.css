@@ -1,0 +1,444 @@
+.stApp {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-attachment: fixed;
+    color: #2c3e50;
+}
+
+/* ====== Card / Form Styling ====== */
+div[data-testid="stForm"], .stTextInput, .stSelectbox, .stTextArea {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    backdrop-filter: blur(6px);
+}
+
+/* ====== Header Title ====== */
+h1, h2 {
+    text-align: center;
+    background: linear-gradient(90deg, #ffffff, #e0e0e0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+/* ====== Input Fields ====== */
+input, textarea, select {
+    border-radius: 12px !important;
+    border: 1.5px solid #90caf9 !important;
+    padding: 0.6em !important;
+    transition: 0.2s;
+}
+input:focus, textarea:focus, select:focus {
+    border-color: #5c6bc0 !important;
+    box-shadow: 0 0 8px rgba(92,107,192,0.3);
+}
+
+/* ====== Button ====== */
+div.stButton > button {
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    color: white;
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 0.7em 1.4em;
+    border: none;
+    box-shadow: 0 4px 15px rgba(118,75,162,0.4);
+    transition: 0.3s;
+}
+div.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(118,75,162,0.6);
+}
+
+/* ====== Step Progress Indicator ====== */
+.step-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 15px 25px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+.step {
+    text-align: center;
+    color: #555;
+    font-weight: 500;
+}
+.step.active {
+    color: #5c6bc0;
+    font-weight: 700;
+}
+.step-circle {
+    background: #d1c4e9;
+    color: white;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-bottom: 6px;
+}
+.step.active .step-circle {
+    background: #5c6bc0;
+    box-shadow: 0 0 10px rgba(92,107,192,0.6);
+}
+
+/* ===== Judul Halaman ===== */
+h1, h2, h3 {
+    color: #ffffff !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* ===== Container Daftar Aduan ===== */
+section.main > div {
+    padding-top: 2rem !important;
+}
+
+/* ===== Tampilan tiap expander laporan ===== */
+div[data-testid="stExpander"] {
+    background: rgba(255,255,255,0.9) !important;
+    border-radius: 15px !important;
+    border: 1px solid rgba(230,230,255,0.6) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+    margin-bottom: 15px !important;
+    color: #2c3e50 !important;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Hover efek biar kelihatan interaktif */
+div[data-testid="stExpander"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+/* ===== EXPANDER HEADER (judul laporan) ===== */
+div[role="button"][data-baseweb="accordion"] {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.25) !important;
+    color: #fff !important;
+    font-weight: 500 !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    transition: all 0.3s ease-in-out;
+    backdrop-filter: blur(8px) !important;
+}
+div[role="button"][data-baseweb="accordion"]:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.3) !important;
+}
+
+/* ===== EXPANDER BODY (isi laporan terbuka) ===== */
+div[data-testid="stExpander"] > div > div {
+    background: rgba(255,255,255,0.1) !important;
+    color: #f0f0f0 !important;
+    border-radius: 0 0 15px 15px !important;
+    padding: 1.5rem !important;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    backdrop-filter: blur(10px) !important;
+    transition: 0.3s;
+}
+div[data-testid="stExpander"] * {
+    color: #111 !important;
+}
+/* ===== EXPANDER AKTIF ===== */
+div[data-testid="stExpander"][aria-expanded="true"] div[role="button"][data-baseweb="accordion"] {
+    background: rgba(255, 255, 255, 0.35) !important;
+    color: #fff !important;
+    border-left: 5px solid #B39DDB !important;
+    box-shadow: 0 6px 20px rgba(179,157,219,0.4);
+}
+
+/* ===== Scrollbar halus ===== */
+::-webkit-scrollbar {
+    width: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background-color: rgba(255,255,255,0.4);
+    border-radius: 10px;
+}
+/* ===== Styling Tabs ===== */
+[data-baseweb="tab-list"] {
+    justify-content: start;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+}
+
+/* Tab item */
+[data-baseweb="tab"] {
+    font-weight: 600;
+    color: #f0f0f0 !important; /* warna teks default (abu muda) */
+    border-radius: 10px 10px 0 0;
+    padding: 8px 18px;
+    transition: all 0.3s ease;
+}
+
+/* Tab aktif */
+[data-baseweb="tab"][aria-selected="true"] {
+    color: #fff !important;              /* teks putih */
+    background: linear-gradient(90deg, #ff758c, #ff7eb3); /* gradasi pink */
+    border-bottom: 3px solid #ff4d6d;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Tab hover */
+[data-baseweb="tab"]:hover {
+    color: #fff !important;
+    background: rgba(255, 255, 255, 0.15);
+}
+/* ====== Card / Form Styling ====== */
+.login-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    backdrop-filter: blur(6px);
+    max-width: 400px; /* Lebar card diperkecil agar mirip gambar */
+    margin: auto; /* Memastikan card di tengah */
+    color: #2c3e50; /* <-- TAMBAHKAN INI: Warna teks default di dalam card */
+}
+
+/* Jika Anda punya styling h1, h2, p, ul di global yang membuat teks putih,
+   kita perlu override di dalam login-card */
+.login-card h1, .login-card h2, .login-card h3 {
+    color: #1a1a1a !important; /* Warna judul di dalam card jadi hitam */
+    text-shadow: none !important; /* Hapus shadow jika ada */
+}
+
+.login-card p, .login-card li {
+    color: #333333 !important; /* Warna paragraf dan list item di dalam card jadi hitam */
+}
+
+/* Untuk st.info di dalam card (jika ada) */
+.login-card div[data-testid="stInfo"] {
+    background-color: rgba(0, 123, 255, 0.1) !important; /* Warna background info box di dalam card */
+    color: #007bff !important; /* Warna teks info box di dalam card */
+    border-left: 5px solid #007bff !important;
+}
+.login-card div[data-testid="stInfo"] p {
+    color: #007bff !important; /* Pastikan teks di dalam info box tetap biru */
+}
+.login-card strong {
+    color: #000000 !important; /* Pastikan teks strong di dalam card jadi hitam */
+}
+/* style.css */
+
+/* ... CSS sebelumnya (login-card, h1, dll.) ... */
+
+/* 1. Kontainer Card Besar untuk Dashboard */
+/* ===== Dashboard Card Enhancement ===== */
+/* ===== White Dashboard Page (Full Card) ===== */
+.white-page-container {
+    background: #fff;
+    border-radius: 25px;
+    max-width: 900px;
+    margin: 4rem auto;
+    padding: 50px 60px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    text-align: left;
+}
+
+.page-title {
+    color: #333;
+    text-align: center;
+    font-size: 1.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.intro-text {
+    text-align: center;
+    color: #555;
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
+    line-height: 1.7;
+}
+
+.section-header {
+    color: #222;
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.algorithm-block {
+    background: #f8f8ff;
+    padding: 20px 25px;
+    border-radius: 15px;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e0e0f5;
+    box-shadow: inset 0 0 6px rgba(102, 126, 234, 0.1);
+}
+
+.algorithm-block h4 {
+    color: #4a4a8a;
+    margin-bottom: 10px;
+}
+
+.algorithm-block ul {
+    color: #333;
+    margin-left: 1rem;
+    line-height: 1.6;
+}
+
+.button-container {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.go-button {
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    color: white;
+    padding: 14px 32px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.go-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(118, 75, 162, 0.4);
+}
+
+
+/* Kotak Pengantar */
+.intro-box {
+    text-align: center;
+    font-size: 1.1em;
+    font-weight: 500;
+    margin-bottom: 30px;
+    color: #333333; /* Pastikan teks intro hitam */
+}
+
+/* Subheader di dalam card */
+
+/* Header Algoritma (Kotak Berwarna) */
+.algo-header {
+    color: white !important;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    text-shadow: none;
+}
+
+
+/* Target ID Container Dashboard Utama */
+[data-testid="stVerticalBlock"]#dashboard-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    color: #2c3e50;
+    margin-top: 20px;
+}
+
+/* 1. Styling Teks Pengantar (Paragraf pertama di container) */
+[data-testid="stVerticalBlock"]#dashboard-container [data-testid="stMarkdownContainer"]:first-child {
+    text-align: center;
+    font-size: 1.1em;
+    font-weight: 500;
+    margin-bottom: 30px;
+    color: #333333;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 2. Styling Header Algoritma (H4) */
+[data-testid="stVerticalBlock"]#dashboard-container h4 {
+    color: white !important;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    text-shadow: none;
+}
+
+/* 3. Styling Judul Utama Daftar (H2/st.header) */
+[data-testid="stVerticalBlock"]#dashboard-container h2 {
+    color: #1a1a1a !important; 
+    text-align: center;
+    font-weight: 700;
+    margin-top: 25px;
+    margin-bottom: 25px;
+    text-shadow: none;
+}
+
+/* 4. Styling Daftar Bernomor (List) */
+[data-testid="stVerticalBlock"]#dashboard-container ol {
+    margin-left: 15px;
+    padding-left: 0;
+}
+[data-testid="stVerticalBlock"]#dashboard-container li {
+    margin-bottom: 8px;
+    color: #333333;
+}
+[data-testid="stVerticalBlock"]#dashboard-container strong {
+    color: #000000;
+}
+/* ======================================================= */
+/* ====== Styling Dashboard Card (Full Width Content) ==== */
+/* ======================================================= */
+/* ======================================================= */
+/* ====== Styling Card Konten Penuh (Universal) ========== */
+/* ======================================================= */
+
+/* Target div utama tempat konten Streamlit dimuat */
+/* ======================================================= */
+/* ====== Penyesuaian Warna Teks di dalam Card Putih ===== */
+/* ======================================================= */
+
+/* Targetkan ID card utama dashboard */
+#dashboard-content-card {
+    background: #ffffff; /* Latar putih */
+    border-radius: 20px;
+    padding: 35px 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    max-width: 900px;
+    margin: 40px auto;
+    color: #2c3e50; /* Warna teks default di dalam card */
+}
+
+
+
+/* ======================================================= */
+/* ====== SOLUSI WARNA: MEMBUAT SEMUA TEKS PUTIH ======= */
+/* ======================================================= */
+
+/* Targetkan semua judul (H1, H2, H3, H4) di konten utama */
+h1, h2, h3, h4 {
+    color: white !important; /* WAJIB menggunakan !important */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4); /* Tambahkan shadow agar lebih kontras */
+}
+
+/* Targetkan semua teks paragraf dan list item di konten utama */
+section.main p,
+section.main li {
+    color: #f0f0f0 !important; /* Putih keabu-abuan agar terlihat */
+}
+
+/* Targetkan teks tebal (strong) agar menonjol */
+section.main strong {
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+/* Targetkan container st.markdown di dashboard Anda untuk teks yang tidak ter-tag */
+div.dashboard-content-card {
+    color: #f0f0f0 !important; /* Set warna teks default untuk area dashboard */
+}
+/* Pastikan kode Python Anda menggunakan struktur yang sudah disepakati: */
+/* BUKA card: st.markdown('<div id="dashboard-content-card">', unsafe_allow_html=True) */
+/* TUTUP card: st.markdown('</div>', unsafe_allow_html=True) */
+/* ... CSS lainnya ... */
+
+/* Hapus .login-card yang lama jika tidak diperlukan lagi untuk dashboard */
+/* ... */
