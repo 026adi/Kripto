@@ -261,8 +261,10 @@ def register_user(nama, username, email, password):
         except Exception as e:
             st.error(f"Terjadi kesalahan: {e}")
         finally:
-            cursor.close()
-            connection.close()
+            if connection:
+               cursor.close()
+               connection.close()
+
     return False
 
 def login_user(username, password):
@@ -661,9 +663,10 @@ def admin_page():
     except Exception as e:
         st.error(f"Terjadi kesalahan saat mengambil data aduan: {e}")
     finally:
-        if connection.is_connected():
+        if connection:
             cursor.close()
             connection.close()
+
     if st.button("Logout Admin"):
         logout()
         st.rerun() # Menggunakan st.rerun
