@@ -273,17 +273,28 @@ def login_user(username, password):
         cursor = connection.cursor()
         try:
             cursor.execute("SELECT * FROM user WHERE username = ?", (username,))
-            user = cursor.fetchone()
-            if user and check_password(password, user['password']): # Req 1 (BLAKE2b)
+            row = cursor.fetchone()
+
+            # --- Ubah hasil tuple ke dictionary manual ---
+            if row:
+                cols = [desc[0] for desc in cursor.description]
+                user = dict(zip(cols, row))
+            else:
+                user = None
+
+            # --- Cek password seperti biasa ---
+            if user and check_password(password, user['password']):  # Req 1 (BLAKE2b)
                 st.session_state.is_logged_in = True
                 st.session_state.user_data = user
                 return user
+
         except Exception as e:
             st.error(f"Terjadi kesalahan: {e}")
         finally:
             cursor.close()
             connection.close()
     return None
+
 
 def login_admin(username, password):
     if username == "admin" and password == "admin":
