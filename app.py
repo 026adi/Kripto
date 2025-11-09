@@ -270,7 +270,7 @@ def register_user(nama, username, email, password):
 def login_user(username, password):
     connection = create_connection()
     if connection:
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor()
         try:
             cursor.execute("SELECT * FROM user WHERE username = ?", (username,))
             user = cursor.fetchone()
@@ -539,7 +539,7 @@ def admin_page():
     # Tabel User (Query ini sekarang BENAR, mengambil dari tabel 'user')
     st.subheader("Tabel User")
     try:
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor()
         # Query ini diperbaiki untuk mengambil data user, BUKAN aduan
         cursor.execute("SELECT id, nama, username, email FROM user")
         users = cursor.fetchall()
