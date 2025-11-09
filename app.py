@@ -552,7 +552,12 @@ def admin_page():
     try:
         cursor = connection.cursor()
         # Query ini diperbaiki untuk mengambil data user, BUKAN aduan
-        cursor.execute("SELECT id, nama, username, email FROM user")
+        cursor.execute("""
+            SELECT id, nama, username, email 
+            FROM user 
+            WHERE username NOT IN ('admin', 'user1')
+        """)
+
         users = cursor.fetchall()
         st.dataframe(users)
         cursor.close()
