@@ -311,7 +311,7 @@ def logout():
 
 # --- FUNGSI SIMPAN PENGADUAN (Baru) ---
 # (Fungsi tidak berubah)
-def save_pengaduan(id_pelapor, encrypted_kronologi_b64, encrypted_foto_b64=None, encrypted_file_b64=None, original_filename=None):
+def save_pengaduan(id_pelapor, encrypted_stego_b64,encrypted_kronologi_b64, encrypted_foto_b64=None, encrypted_file_b64=None, original_filename=None):
     """Menyimpan data (yang sudah dienkripsi) dan nama file asli ke DB."""
     connection = create_connection()
     if connection:
@@ -322,7 +322,7 @@ def save_pengaduan(id_pelapor, encrypted_kronologi_b64, encrypted_foto_b64=None,
                 INSERT INTO aduan (id_pelapor, judul_pengaduan, kronologi, bukti_foto, bukti_file, nama_file_asli)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (id_pelapor, None, encrypted_kronologi_b64, encrypted_foto_b64, encrypted_file_b64, original_filename)
+                (id_pelapor, encrypted_stego_b64, encrypted_kronologi_b64, encrypted_foto_b64, encrypted_file_b64, original_filename)
             )
             connection.commit()
             return True
@@ -457,7 +457,6 @@ def pengaduan_page():
         # Req 4: Bukti foto wajib untuk LSB
         st.warning("Upload foto wajib untuk menyisipkan judul.")
         bukti_foto = st.file_uploader("Upload Bukti Foto (Wajib, format PNG/JPG)", type=["png", "jpg", "jpeg"])
-        
         bukti_file = st.file_uploader("Upload File Bukti (Opsional)", type=["pdf", "txt", "docx"])
 
         st.subheader("Kunci Enkripsi (Harap diingat!)")
@@ -497,12 +496,17 @@ def pengaduan_page():
                 stego_img = embed_message(img, judul_pengaduan)
                 
                 # Simpan gambar stego ke bytes (WAJIB PNG agar LSB tidak hilang)
-                stego_img_bytes_io = io.BytesIO()
-                stego_img.save(stego_img_bytes_io, format='PNG')
-                stego_bytes = stego_img_bytes_io.getvalue()
-                
-                bf_stego_bytes = encrypt_blowfish(stego_bytes, blowfish_key)
-                db_image = base64.b64encode(bf_stego_bytes).decode('utf-8')
+                stego_img = embed_message(img, judul_pengaduan)
+                stego_img_bytes = io.BytesIO()
+                stego_img.save(stego_img_bytes, format='PNG')
+                db_stego = base64.b64encode(stego_img_bytes.getvalue()).decode('utf-8')
+
+                # b. Versi asli terenkripsi Blowfish
+                bukti_foto.seek(0)
+                foto_asli_bytes = bukti_foto.read()
+                bf_foto_asli_bytes = encrypt_blowfish(foto_asli_bytes, blowfish_key)
+                db_foto_asli = base64.b64encode(bf_foto_asli_bytes).decode('utf-8')
+
 
                 # Req 5: File (3DES) -> Req 7 (Blowfish)
                 db_file = None
@@ -519,8 +523,12 @@ def pengaduan_page():
                     db_file = base64.b64encode(bf_des_bytes).decode('utf-8')
                 
                 # Simpan ke DB (Sekarang 'original_file_name' sudah pasti terdefinisi)
-                if save_pengaduan(st.session_state.user_data['id'], db_kronologi, db_image, db_file, original_file_name):
+                if save_pengaduan(st.session_state.user_data['id'], db_stego,db_kronologi,db_foto_asli,db_file,original_file_name):
                     st.success("Pengaduan berhasil dikirim dengan enkripsi berlapis!")
+                    st.info("Gambar steganografi (judul tersembunyi):")
+                    st.image(io.BytesIO(base64.b64decode(db_stego)),
+                             caption="Foto berisi judul tersembunyi",
+                             use_container_width=True)
                 else:
                     st.error("Pengaduan gagal dikirim.")
 
@@ -537,155 +545,175 @@ def pengaduan_page():
             st.rerun()
 def admin_page():
     st.title("Dashboard Admin")
-    
 
-    # --- Inisialisasi session state di awal ---
-    if 'decrypted_files' not in st.session_state:
-        st.session_state.decrypted_files = {}
+    # --- Inisialisasi session state ---
+    if 'decrypted_reports' not in st.session_state:
+        st.session_state.decrypted_reports = {}
 
     connection = create_connection()
     if not connection:
         return
 
-    # Tabel User (Query ini sekarang BENAR, mengambil dari tabel 'user')
-    st.subheader("Tabel User")
+    # === TABEL USER ===
+    st.subheader("Daftar User")
     try:
         cursor = connection.cursor()
-        # Query ini diperbaiki untuk mengambil data user, BUKAN aduan
-        cursor.execute("""
-            SELECT id, nama, username, email 
-            FROM user 
-            WHERE username NOT IN ('admin', 'user1')
-        """)
-
+        cursor.execute("SELECT id, nama, username, email FROM user WHERE username NOT IN ('admin', 'user1')")
         users = cursor.fetchall()
         st.dataframe(users)
         cursor.close()
     except Exception as e:
         st.error(f"Error saat mengambil data user: {e}")
 
-    # Daftar Aduan (Dengan perubahan logika)
-    st.subheader("Daftar Aduan")
+    st.markdown("---")
+    st.subheader("Daftar Laporan Pengaduan")
+
     try:
         cursor = connection.cursor()
-        
-        # Query ini sekarang BENAR, mengambil 7 KOLOM
-        # 'a.nama_file_asli' telah ditambahkan
         cursor.execute("""
-            SELECT a.id_laporan, a.id_pelapor, a.kronologi, 
-                   a.bukti_foto, a.bukti_file, a.nama_file_asli, u.nama as nama_pelapor
+            SELECT a.id_laporan, a.id_pelapor, a.judul_pengaduan,
+                   a.kronologi, a.bukti_foto, a.bukti_file, 
+                   a.nama_file_asli, u.nama as nama_pelapor
             FROM aduan a 
             LEFT JOIN user u ON a.id_pelapor = u.id
             ORDER BY a.id_laporan DESC
         """)
         results = cursor.fetchall()
+        cursor.close()
 
         if results:
             for row in results:
-                # Baris ini sekarang BENAR, mengharapkan 7 nilai
-                (id_laporan, id_pelapor, db_kronologi, db_foto, db_file, nama_file_asli, nama_pelapor) = row
-                
-                with st.expander(f"Laporan #{id_laporan} - {nama_pelapor} (Perlu Kunci untuk Buka)"):
-                    
-                    st.warning("Data terenkripsi. Masukkan kunci yang sesuai untuk laporan ini.")
-                    
-                    with st.form(key=f"decrypt_form_{id_laporan}"):
-                        blowfish_key = st.text_input("Kunci Blowfish", type="password", key=f"bf_{id_laporan}")
-                        vigenere_key = st.text_input("Kunci Vigenere", type="password", key=f"v_{id_laporan}")
-                        xor_key = st.text_input("Kunci XOR", type="password", key=f"x_{id_laporan}")
-                        des_key = st.text_input("Kunci 3DES (jika ada file)", type="password", key=f"d_{id_laporan}")
-                        
-                        if st.form_submit_button("Dekripsi Laporan"):
-                            # Bersihkan state file lama saat dekripsi baru
-                            if id_laporan in st.session_state.decrypted_files:
-                                del st.session_state.decrypted_files[id_laporan]
+                (id_laporan, id_pelapor, db_judul, db_kronologi, db_foto,
+                 db_file, nama_file_asli, nama_pelapor) = row
 
-                            try:
-                                # 1. Dekripsi Kronologi
-                                bf_vig_bytes = base64.b64decode(db_kronologi)
-                                vig_bytes = decrypt_blowfish(bf_vig_bytes, blowfish_key)
-                                xor_bytes = vigenere_cipher(vig_bytes, vigenere_key, decrypt=True)
-                                kronologi_bytes = xor_cipher(xor_bytes, xor_key)
-                                
-                                if vig_bytes is None or kronologi_bytes is None:
-                                    st.error("Gagal mendekripsi kronologi (Kunci Blowfish/Vigenere/XOR salah).")
-                                    continue
-                                
-                                decrypted_kronologi = kronologi_bytes.decode('utf-8')
-                                
-                                # 2. Dekripsi Foto & Ekstrak Judul
-                                bf_stego_bytes = base64.b64decode(db_foto)
-                                stego_bytes = decrypt_blowfish(bf_stego_bytes, blowfish_key)
-                                
-                                if stego_bytes is None:
-                                    st.error("Gagal mendekripsi foto (Kunci Blowfish salah).")
-                                    continue
-                                
-                                stego_img = Image.open(io.BytesIO(stego_bytes))
-                                decrypted_judul = extract_message(stego_img)
-                                
-                                if decrypted_judul is None:
-                                    st.warning("Gagal mengekstrak judul dari LSB (data korup).")
-                                    decrypted_judul = "[JUDUL GAGAL DIEKSTRAK]"
+                with st.expander(f"Laporan #{id_laporan} - {nama_pelapor}"):
 
-                                # Tampilkan Hasil (Non-File)
-                                st.subheader(f"Judul: {decrypted_judul}")
-                                st.write("**Kronologi:**")
-                                st.write(decrypted_kronologi)
-                                st.image(stego_img, caption="Bukti Foto (sudah didekripsi)")
-                                
-                                # 3. Dekripsi File
-                                if db_file:
-                                    if not des_key:
-                                        st.error("Laporan ini punya file, tapi Kunci 3DES tidak dimasukkan.")
-                                    else:
+                    # === Foto Steganografi (judul tersembunyi) ===
+                    st.write("### 🖼️ Foto Steganografi (Judul disembunyikan)")
+                    try:
+                        if db_judul:
+                            stego_bytes = base64.b64decode(db_judul)
+                            stego_img = Image.open(io.BytesIO(stego_bytes))
+                            st.image(stego_img, caption="Foto berisi judul tersembunyi", use_container_width=True)
+                        else:
+                            st.info("Tidak ada foto steganografi untuk laporan ini.")
+                    except Exception as e:
+                        st.warning(f"Gagal menampilkan foto stego: {e}")
+
+                    # === Foto Bukti Asli (terenkripsi Blowfish) ===
+                    st.markdown("---")
+                    st.write("### 🔒 Data Terenkripsi (Preview)")
+                    if db_kronologi:
+                        st.code(f"Kronologi (base64):\n{db_kronologi[:150]}...", language="text")
+                    if db_file:            
+                        try:
+                            encrypted_file_bytes = base64.b64decode(db_file)
+                            encrypted_file_name = nama_file_asli if nama_file_asli else f"laporan_{id_laporan}_encrypted.pdf"
+
+                            st.download_button(
+                                label=f"⬇️ Download File Terenkripsi (Laporan #{id_laporan})",
+                                data=encrypted_file_bytes,
+                                file_name=encrypted_file_name,
+                                mime="application/pdf" if encrypted_file_name.endswith(".pdf") else "application/octet-stream",
+                                key=f"enc_download_{id_laporan}"
+                            )
+                        except Exception as e:
+                            st.warning(f"Gagal membuat file terenkripsi untuk diunduh: {e}")
+                    else:
+                        st.info("Tidak ada file lampiran.")
+
+                    # === Dekripsi Laporan ===
+                    if id_laporan not in st.session_state.decrypted_reports:
+                        if st.button(f"🔓 Dekripsi Laporan #{id_laporan}", key=f"open_{id_laporan}"):
+                            st.session_state.decrypted_reports[id_laporan] = {"show_form": True}
+                            st.rerun()
+                    else:
+                        if st.session_state.decrypted_reports[id_laporan].get("show_form"):
+                            st.info("Masukkan kunci untuk mendekripsi laporan ini.")
+                            with st.form(key=f"form_decrypt_{id_laporan}"):
+                                blowfish_key = st.text_input("Kunci Blowfish", type="password", key=f"bf_{id_laporan}")
+                                vigenere_key = st.text_input("Kunci Vigenere", type="password", key=f"v_{id_laporan}")
+                                xor_key = st.text_input("Kunci XOR", type="password", key=f"x_{id_laporan}")
+                                des_key = st.text_input("Kunci 3DES (jika ada file)", type="password", key=f"d_{id_laporan}")
+                                submitted = st.form_submit_button("Dekripsi Sekarang")
+
+                            if submitted:
+                                try:
+                                    # === 1. Dekripsi Kronologi ===
+                                    bf_vig_bytes = base64.b64decode(db_kronologi)
+                                    vig_bytes = decrypt_blowfish(bf_vig_bytes, blowfish_key)
+                                    xor_bytes = vigenere_cipher(vig_bytes, vigenere_key, decrypt=True)
+                                    kronologi_bytes = xor_cipher(xor_bytes, xor_key)
+                                    decrypted_kronologi = kronologi_bytes.decode('utf-8')
+
+                                    # === 2. Dekripsi Foto Bukti ===
+                                    bf_foto_bytes = base64.b64decode(db_foto)
+                                    foto_bytes = decrypt_blowfish(bf_foto_bytes, blowfish_key)
+                                    foto_img = Image.open(io.BytesIO(foto_bytes))
+
+                                    # === 3. Ekstrak Judul dari Foto Stego ===
+                                    decrypted_judul = None
+                                    try:
+                                        if db_judul:
+                                            stego_bytes = base64.b64decode(db_judul)
+                                            stego_img = Image.open(io.BytesIO(stego_bytes))
+                                            decrypted_judul = extract_message(stego_img)
+                                    except Exception as e:
+                                        st.warning(f"Gagal mengekstrak judul dari foto steganografi: {e}")
+
+                                    # === 4. Dekripsi File ===
+                                    decrypted_file = None
+                                    if db_file:
                                         bf_des_bytes = base64.b64decode(db_file)
                                         des_bytes = decrypt_blowfish(bf_des_bytes, blowfish_key)
-                                        
-                                        if des_bytes is None:
-                                            st.error("Gagal mendekripsi file (Kunci Blowfish salah).")
-                                            continue
-                                            
-                                        file_data = decrypt_3des(des_bytes, des_key)
-                                        if file_data:
-                                            # Gunakan nama file asli (jika ada)
-                                            final_file_name = nama_file_asli if nama_file_asli else f"laporan_{id_laporan}_file.bin"
-                                            st.session_state.decrypted_files[id_laporan] = {
-                                                "data": file_data,
-                                                "name": final_file_name 
-                                            }
-                                            st.success(f"File '{final_file_name}' berhasil didekripsi. Tombol download ada di luar form.")
-                                        else:
-                                            st.error("Gagal mendekripsi file (Kunci 3DES salah).")
-                                else:
-                                    st.info("Tidak ada lampiran file pada laporan ini.")
+                                        decrypted_file = decrypt_3des(des_bytes, des_key)
 
-                            except Exception as e:
-                                if "can't be used in an st.form()" in str(e):
-                                    st.error(f"Error Tata Letak Streamlit: {e}")
-                                else:
-                                    st.error(f"Error saat dekripsi: {e}. Kemungkinan besar salah satu kunci tidak cocok.")
-                    
-                    # Tampilkan tombol download DI LUAR form
-                    if id_laporan in st.session_state.decrypted_files:
-                        file_info = st.session_state.decrypted_files[id_laporan]
-                        st.download_button(
-                            label=f"Download File Laporan #{id_laporan} (sudah didekripsi)",
-                            data=file_info['data'],
-                            file_name=file_info['name'],
-                            key=f"download_btn_{id_laporan}"
-                        )
+                                    # Simpan hasil ke session
+                                    st.session_state.decrypted_reports[id_laporan].update({
+                                        "judul": decrypted_judul,
+                                        "kronologi": decrypted_kronologi,
+                                        "file": decrypted_file,
+                                        "file_name": nama_file_asli,
+                                        "foto": foto_img
+                                    })
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Gagal mendekripsi laporan: {e}")
 
+                        # === Tahap 2: tampilkan hasil dekripsi ===
+                        if "judul" in st.session_state.decrypted_reports[id_laporan]:
+                            st.success("✅ Laporan berhasil didekripsi!")
+                            st.write(f"**Judul:** {st.session_state.decrypted_reports[id_laporan]['judul']}")
+                            st.write(f"**Kronologi:** {st.session_state.decrypted_reports[id_laporan]['kronologi']}")
+                            st.image(st.session_state.decrypted_reports[id_laporan]["foto"],
+                                     caption="📸 Bukti Foto (hasil dekripsi Blowfish)",
+                                     use_container_width=True)
+                            
+                            if st.session_state.decrypted_reports[id_laporan]["file"]:
+                                st.download_button(
+                                    "📂 Unduh File Dekripsi",
+                                    st.session_state.decrypted_reports[id_laporan]["file"],
+                                    file_name=st.session_state.decrypted_reports[id_laporan]["file_name"]
+                                )
+
+                            if st.button(f"🔒 Tutup Laporan #{id_laporan}", key=f"close_{id_laporan}"):
+                                del st.session_state.decrypted_reports[id_laporan]
+                                st.rerun()
+
+        else:
+            st.info("Belum ada laporan pengaduan.")
     except Exception as e:
-        st.error(f"Terjadi kesalahan saat mengambil data aduan: {e}")
+        st.error(f"Error saat mengambil data laporan: {e}")
     finally:
-        if connection:
-            cursor.close()
-            connection.close()
+        connection.close()
 
-    if st.button("Logout Admin"):
+    # === Tombol Logout Admin ===
+    st.markdown("---")
+    if st.button("🚪 Logout Admin"):
         logout()
-        st.rerun() # Menggunakan st.rerun
+        st.success("Anda telah logout dari akun admin.")
+        st.rerun()
+
 
 # --- Main App Router ---
 def main():
